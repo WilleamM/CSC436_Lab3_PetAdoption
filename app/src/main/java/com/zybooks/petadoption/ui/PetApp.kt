@@ -36,57 +36,67 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.zybooks.petadoption.data.Pet
 import com.zybooks.petadoption.data.PetDataSource
 import com.zybooks.petadoption.data.PetGender
 import com.zybooks.petadoption.ui.theme.PetAdoptionTheme
 import kotlinx.serialization.Serializable
+@OptIn(kotlinx.serialization.InternalSerializationApi::class)
+
 
 sealed class Routes {
    @Serializable
    data object List
 
    @Serializable
-   data object Detail
+   data class Detail(
+      val petId: Int
+   )
 
    @Serializable
-   data object Adopt
+   data class Adopt(
+      val petId: Int
+   )
 }
 
 @Composable
-fun PetApp(
-   modifier: Modifier = Modifier,
-   petViewModel: PetViewModel = viewModel()
-) {
+fun PetApp() {
    val navController = rememberNavController()
 
    NavHost(
       navController = navController,
       startDestination = Routes.List
    ) {
-      composable<Routes.List> { // List -> Detail (When clicked on image)
+      composable<Routes.List> {
          ListScreen(
-            petList = petViewModel.petList,
             onImageClick = { pet ->
-               petViewModel.selectedPet = pet
-               navController.navigate(Routes.Detail)
+               navController.navigate(
+                  Routes.Detail(pet.id)
+               )
             }
          )
       }
-      composable<Routes.Detail> {
+      composable<Routes.Detail> { backstackEntry ->
+         val details: Routes.Detail = backstackEntry.toRoute()
+
          DetailScreen(
-            pet = petViewModel.selectedPet,
+            petId = details.petId,
             onAdoptClick = {
-               navController.navigate(Routes.Adopt)
+               navController.navigate(
+                  Routes.Adopt(details.petId)
+               )
             },
             onUpClick = {
                navController.navigateUp()
             }
          )
       }
-      composable<Routes.Adopt> {
+      composable<Routes.Adopt> { backstackEntry ->
+         val adopt: Routes.Adopt = backstackEntry.toRoute()
+
          AdoptScreen(
-            pet = petViewModel.selectedPet,
+            petId = adopt.petId,
             onUpClick = {
                navController.navigateUp()
             }
@@ -94,6 +104,8 @@ fun PetApp(
       }
    }
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
